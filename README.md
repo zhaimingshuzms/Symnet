@@ -6,8 +6,7 @@ SymNet_torch development repo
 See `requirementes.txt`. Python 3.7 + PyTorch 1.8.1
 
 # Download data
-Run in data
-    bash download_data.sh 
+    bash data/download_data.sh 
 # usage
 
 
