@@ -70,7 +70,11 @@ def main():
 
     
     # save obj predictions
-    pklname = "%s_%s_ep%d.pt"%(args.name, args.test_set, args.epoch)
+    print("test set",args.test_set)
+    if args.test_set=="val":
+        pklname = "%s_%s_ep%d.pt"%(args.name, args.test_set, args.epoch)
+    else:#added
+        pklname = "%s_ep%d.pt"%(args.name, args.epoch)
     pklpath = osp.join(cfg.DATA_ROOT_DIR, "obj_scores", pklname)
     assert args.force or not os.path.exists(pklpath), pklpath
     logger.info("obj prediction => "+pklpath)
@@ -104,7 +108,10 @@ def test_epoch(model, evaluator, dataloader, pklpath):
 
 
     print("Saving %s tensor to %s"%(str(predictions_obj.size()), pklpath))
-    torch.save(predictions_obj, pklpath)
+    print("pklpath :",pklpath)
+    
+    with open(pklpath, 'w'): #added
+        torch.save(predictions_obj, pklpath)
 
 
     real_obj_acc = torch.mean(torch.cat(accuracies_obj)).item()

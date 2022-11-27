@@ -58,7 +58,6 @@ class Model(nn.Module):
 
         self.num_obj  = len(dataset.objs)
         self.num_attr = len(dataset.attrs)
-
         self.attr_embedder = utils.Embedder(args.wordvec, dataset.attrs, args.data)
         self.emb_dim = self.attr_embedder.emb_dim  # dim of wordvec (attr or obj)
 
@@ -119,6 +118,7 @@ class Model(nn.Module):
             prob_obj = batch["obj_pred"]
         else:
             prob_obj = prob_pos_obj
+
 
 
         if require_loss:

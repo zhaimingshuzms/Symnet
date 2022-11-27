@@ -70,7 +70,7 @@ class Embedder:
 
     def __init__(self, vec_type: str, vocab: list, data: str):
         self.vec_type = vec_type
-
+        # self.embeds = self.load_word_embeddings(vec_type, vocab, data)
         if vec_type != 'onehot':
             self.embeds = self.load_word_embeddings(vec_type, vocab, data)
             self.emb_dim = self.embeds.shape[1]
@@ -87,7 +87,7 @@ class Embedder:
             #                     torch.from_numpy(self.embeds).cuda())
             
             return torch.from_numpy(self.embeds).float().cuda()[i, :]
-
+    
     def load_word_embeddings(self, vec_type: str, vocab: list, data: str):
         tmp = aux_data.load_wordvec_dict(data, vec_type)
         if type(tmp) == tuple:

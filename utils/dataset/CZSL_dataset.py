@@ -26,7 +26,6 @@ class CompositionDatasetActivations(torch.utils.data.Dataset):
         self.feat_dim = None
         self.transform = data_utils.imagenet_transform(phase)
         self.loader = data_utils.ImageLoader(self.root+'/images/')
-
         # read feature
         if feat_file is not None:
             feat_file = os.path.join(root, feat_file)
@@ -44,7 +43,6 @@ class CompositionDatasetActivations(torch.utils.data.Dataset):
         self.attr2idx = {attr: idx for idx, attr in enumerate(self.attrs)}
         self.obj2idx = {obj: idx for idx, obj in enumerate(self.objs)}
         self.pair2idx = {pair: idx for idx, pair in enumerate(self.pairs)}
-
 
         self.train_data, self.test_data = self.get_split_info()
         self.data = self.train_data if self.phase=='train' else self.test_data   # list of [img_name, attr, obj, attr_id, obj_id, feat]
@@ -186,7 +184,7 @@ class CompositionDatasetActivations(torch.utils.data.Dataset):
 
 
 
-
+# '''
 
 class CompositionDatasetActivationsGenerator(CompositionDatasetActivations):
 
@@ -239,3 +237,5 @@ if __name__=='__main__':
         root = 'data/attributes-as-operators/data/mit-states',
         feat_file = 'data/attributes-as-operators/data/mit-states/features.t7',
     )
+
+# '''
