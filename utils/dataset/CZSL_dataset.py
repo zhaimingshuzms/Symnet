@@ -108,7 +108,7 @@ class CompositionDatasetActivations(torch.utils.data.Dataset):
                 "obj_name": obj,
                 "attr_id": self.attr2idx[attr],
                 "obj_id": self.obj2idx[obj],
-                "feature": self.activation_dict[image],
+                "feature": self.activation_dict[image]  if hasattr(self, 'activation_dict') else None,
             }
 
             if (attr, obj) in train_pair_set:
@@ -203,8 +203,12 @@ class CompositionDatasetActivationsGenerator(CompositionDatasetActivations):
         transform = data_utils.imagenet_transform('test')
 
         if feat_extractor is None:
-            feat_extractor = torchvision.models.resnet18(pretrained=True)
-            feat_extractor.fc = torch.nn.Sequential()
+            # feat_extractor = torchvision.models.resnet18(pretrained=True)
+            # feat_extractor.fc = torch.nn.Sequential()
+            import clip
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            feat_extractor, preprocess = clip.load("ViT-L/14", device=device)
+
         feat_extractor.eval().cuda()
 
         image_feats = []
@@ -213,8 +217,8 @@ class CompositionDatasetActivationsGenerator(CompositionDatasetActivations):
             files = [x["image_path"] for x in chunk]
             imgs = list(map(self.loader, files))
             imgs = list(map(transform, imgs))
-            feats = feat_extractor(torch.stack(imgs, 0).cuda())
-            image_feats.append(feats.data.cpu())
+            feats = feat_extractor.encode_image(torch.stack(imgs, 0).cuda())
+            image_feats.append(feats.data.cpu().float())
             image_files += files
         image_feats = torch.cat(image_feats, 0)
         print ('features for %d images generated'%(len(image_files)))
@@ -234,8 +238,8 @@ if __name__=='__main__':
     )
     """
     CompositionDatasetActivationsGenerator(
-        root = 'data/attributes-as-operators/data/mit-states',
-        feat_file = 'data/attributes-as-operators/data/mit-states/features.t7',
+        root = 'data/ut-zap50k-original',
+        feat_file = 'clip_features.t7',
     )
 
 # '''
