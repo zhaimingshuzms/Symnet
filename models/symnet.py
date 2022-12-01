@@ -49,6 +49,16 @@ class MLPClassifier(nn.Module):
     def string(self):
         return self.name
 
+class ClipAdapter(nn.Module):
+    def __init__(self, feature_len):
+        super(ClipAdapter, self).__init__()
+        self.feature_len = feature_len
+        self.mod = nn.Sequential(nn.Linear(feature_len,feature_len,bias=True),nn.ReLU(),nn.Linear(feature_len,feature_len,bias=True))
+        # self.alpha = torch.zeros(1).cuda()
+        self.alpha = torch.nn.Parameter(torch.FloatTensor(1), requires_grad=True).cuda()
+
+    def forward(self, feature):
+        return self.alpha * feature + (torch.ones(1).cuda()-self.alpha) * self.mod(feature)
 
 class Model(nn.Module):
     def __init__(self, dataset, args):
@@ -68,6 +78,9 @@ class Model(nn.Module):
 
         self.attr_cls = MLPClassifier(self.num_attr, args, "attr_cls")
         self.obj_cls = MLPClassifier(self.num_obj, args, "obj_cls")
+
+        self.attr_adapter = ClipAdapter(self.emb_dim)
+        self.img_adapter = ClipAdapter(args.rep_dim)
 
         if args.loss_class_weight:
             attr_loss_wgt, obj_loss_wgt = aux_data.load_loss_weight(args.data)
@@ -101,15 +114,19 @@ class Model(nn.Module):
         # (#attr, dim_emb), wordvec of all attributes
         tile_attr_emb = utils.tile_on(attr_emb, batchsize, 0)
         # (bz*#attr, dim_emb)
-        
+
         repeat_img_feat = utils.repeat_on(pos_img, self.num_attr, 0)
+        
+        adapted_img = self.img_adapter(repeat_img_feat)
+        adapted_attr = self.attr_adapter(tile_attr_emb)
+
         # (bz*#attr, dim_rep)
-        feat_plus = self.CoN(repeat_img_feat, tile_attr_emb)
-        feat_minus = self.DeCoN(repeat_img_feat, tile_attr_emb)
+        feat_plus = self.CoN(adapted_img, adapted_attr)
+        feat_minus = self.DeCoN(adapted_img, adapted_attr)
 
         prob_RMD_plus, prob_RMD_minus = self.RMD_prob(
             feat_plus, feat_minus,
-            repeat_img_feat,
+            adapted_img,
             self.args.rmd_metric)   # opensource: "rmd"
 
         prob_attr = (prob_RMD_plus+prob_RMD_minus)*0.5
@@ -122,7 +139,7 @@ class Model(nn.Module):
 
 
         if require_loss:
-            losses = self.compute_loss(batch, pos_img, score_pos_obj, repeat_img_feat, feat_plus, feat_minus)
+            losses = self.compute_loss(batch, pos_img, score_pos_obj, adapted_img, feat_plus, feat_minus)
             return prob_attr, prob_obj, losses
         else:
             return prob_attr, prob_obj
