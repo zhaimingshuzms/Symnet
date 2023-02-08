@@ -53,9 +53,9 @@ class ClipAdapter(nn.Module):
     def __init__(self, feature_len):
         super(ClipAdapter, self).__init__()
         self.feature_len = feature_len
-        self.mod = nn.Sequential(nn.Linear(feature_len,feature_len,bias=True),nn.ReLU(),nn.Linear(feature_len,feature_len,bias=True))
+        self.mod = nn.Sequential(nn.Linear(feature_len,feature_len//4,bias=True),nn.ReLU(),nn.Linear(feature_len//4,feature_len,bias=True))
         # self.alpha = torch.zeros(1).cuda()
-        self.alpha = torch.nn.Parameter(torch.FloatTensor(1), requires_grad=True).cuda()
+        self.alpha = torch.nn.Parameter(torch.FloatTensor(0.9), requires_grad=True).cuda()
 
     def forward(self, feature):
         return self.alpha * feature + (torch.ones(1).cuda()-self.alpha) * self.mod(feature)
